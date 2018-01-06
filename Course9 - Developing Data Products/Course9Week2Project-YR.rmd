@@ -1,0 +1,20 @@
+---
+title: "Course9Week2Project-YR"
+author: "Yonatan Rafael"
+date: "December 10, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars, message = FALSE, warning = FALSE}
+library(leaflet)
+library(dplyr)
+my_map <- leaflet() %>% addTiles() %>% addMarkers(lat = 37.95, lng = -122.53, popup = "Yonatan's Home")
+my_map
+```
+
+

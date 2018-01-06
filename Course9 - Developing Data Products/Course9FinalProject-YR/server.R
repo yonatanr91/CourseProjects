@@ -1,0 +1,11 @@
+library(shiny)
+library(vcd)
+data("Baseball")
+shinyServer(function(input, output) {
+        output$atbat <- renderText({Baseball[which(Baseball$name2 == input$player), 10]})
+        output$hits <- renderText({Baseball[which(Baseball$name2 == input$player), 11]})
+        output$homeruns <- renderText({Baseball[which(Baseball$name2 == input$player), 12]})
+        output$runs <- renderText({Baseball[which(Baseball$name2 == input$player), 13]})
+        output$rbi <- renderText({Baseball[which(Baseball$name2 == input$player), 14]})
+        output$walks <- renderText({Baseball[which(Baseball$name2 == input$player), 15]})
+        })

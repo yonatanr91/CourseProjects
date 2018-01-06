@@ -1,0 +1,113 @@
+---
+title: "Course8FinalProject-YR"
+author: "Yonatan Rafael"
+date: "December 2, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Overview
+
+This project attempts to quantify the performance of personal activity data collected through accelerometers like Jawbone Up, Nike Fuelband, and Fitbit.The personal activity data is focused on quantified self movement, used to measure health and patterns in behavior, placed on belts, forearms, arms, and dumbells. 
+
+##Process Explanation
+
+1) Prediction is based on the "classe" variable in the data set. "A" represents successful execution. "B", "C", "D", and "E" all represent error in execution.
+2) The set.seed() function will allow us to reproduce the data set.
+3) Two models (rpart and random forecast) will be tested to evaluate and optimize accuracy of the test.
+4) Cross validation will be performed by splitting the training data into 2 subsamples. This will allow us to test accuracy, before applying the model to final submission.
+5) Expected errow will be based on the test sub-sample coming out of train data set. Accuracy will be measured by seeing the proportion of correctly predicted observations out of the total sample.
+
+#Analysis
+
+##Load Packages
+```{r warning=FALSE}
+library(caret)
+library(randomForest)
+library(rpart)
+```
+
+##Processing Data
+Downloads data, if necessary.
+```{r}
+if(!file.exists("pml-training.csv")) {
+        trainfileUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+        download.file(trainfileUrl, destfile="C:/Users/yrafael/Desktop/Data Science Course/Course Code/pml-training.csv")
+}
+
+if(!file.exists("pml-testing.csv")) {
+        testfileUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+        download.file(testfileUrl, destfile="C:/Users/yrafael/Desktop/Data Science Course/Course Code/pml-test.csv")
+}
+```
+
+Read files and replace missing data with N/A.
+```{r}
+train <- read.csv("pml-training.csv", na.strings=c("#DIV/0!"))
+test <- read.csv("pml-testing.csv", na.strings=c("#DIV/0!"))
+```
+
+Remove columns with majority N/A.
+```{r}
+trainN <- train[, colSums(is.na(train)) < nrow(train) * 0.3]
+testN <- test[, colSums(is.na(test)) < nrow(test) * 0.3]
+```
+
+Remove zero variance columns.
+```{r}
+novariance <- nearZeroVar(trainN, saveMetrics= TRUE)
+trainNV <- trainN[,!novariance$nzv]
+testNV <- testN[,!novariance$nzv]
+```
+
+Set seed for reproducibility. And break data set into another training and validation set, to avoid using final test data.
+```{r}
+set.seed(1000)
+Partition <- createDataPartition(y=trainNV$classe, p = .75, list = FALSE)
+splitNVtrain <- trainNV[Partition,]
+splitNVtest <- trainNV[-Partition,]
+```
+
+
+##Modelling Data
+
+###Rpart
+Run rpart model
+```{r}
+rp_model <- train(classe ~ ., method = "rpart", data = splitNVtrain)
+```
+
+```{r}
+rp_predict <- predict(rp_model, splitNVtest)
+```
+
+Accuracy of Model
+```{r}
+confusionMatrix(rp_predict, splitNVtest$classe)$overall['Accuracy']
+```
+
+###Random Forests
+Run random forests model
+```{r}
+rf_model <- randomForest(classe ~. , data=splitNVtrain, method = "class")
+```
+
+Predicting based on random forests model
+```{r}
+rf_predict <- predict(rf_model, splitNVtest)
+```
+
+Accuracy of Model
+```{r}
+confusionMatrix(rf_predict, splitNVtest$classe)$overall['Accuracy']
+```
+
+#Conclusion
+The Random Forest Model has a higher degree of accuracy (100%) than the RPart Model (66%%). We will use the Random Forest Model in the final quiz.
+
+#Reference
+
+Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.

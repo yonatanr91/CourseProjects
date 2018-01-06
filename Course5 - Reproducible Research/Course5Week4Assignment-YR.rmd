@@ -1,0 +1,85 @@
+Course 5 - Week 4 Assignment - Storm Effect of Population Health and Economic Consquences
+==============================================================
+
+## Synopsis
+
+This analysis evaluates data from the National Weather Service's Storm Data. Data is from 1950 to November 2011. The analysis becins by cleaning up entries for Event Type. It then creates two metrics:
+
+1) Harmful Score = Fatalities + Injuries
+2) Economic Damage = Property Damage + Crop Damage.
+
+To present the results, two bar plots show the effect of event type on the above metrics.
+
+1) For Harmful Score, Tornadoes have the most impact.
+2) For Economic Damage, "Tornadoes, tstm wind, hail"" have the most impact.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Processing
+
+Download data.
+```{r}
+if(!file.exists("repdata%2Fdata%2FStormData.csv.bz2")) {
+        Url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+        download.file(Url, destfile="C:/Users/yrafael/Desktop/Data Science Course/Course Code/repdata%2Fdata%2FStormData.csv.bz2", mode = "wb")
+}
+```
+
+Read data and fill blanks with NAs.
+```{r, cache = TRUE}
+data <- read.csv("repdata%2Fdata%2FStormData.csv.bz2", header = TRUE, na.strings = c("", " ", "NA"))
+```
+
+Cleaning up EVTYPE to consolidate the number of possible types of events by:
+1) Lowercasing all entries.
+2) Removing all spacies before or after an entry.
+```{r}
+data$EVTYPE <- tolower(data$EVTYPE)
+data$EVTYPE <- gsub("^ *| $*","", data$EVTYPE)
+```
+
+Group By Event and Create a Measure of "HarmfulScore" = Fatalities + Injuries. 
+```{r}
+library(dplyr)
+data <- tbl_df(data)
+HarmByEventGrouped <- group_by(data, EVTYPE)
+HarmByEventSummarized <- summarize(HarmByEventGrouped, HarmfulScore = sum(FATALITIES,INJURIES))
+HarmByEventOrdered <- arrange(HarmByEventSummarized, desc(HarmfulScore))
+HarmByEventSelect <- HarmByEventOrdered[1:10, ]
+```
+
+Create Property Damage using PROPDMGEXP CROPDMGEXP assumptions multiplied by PROPDMG and CROPDMG, respectively. Create a Measure of "Economic Damage" = Property Damage + Crop Damage.
+```{r}
+data2 <- data
+data2$PROPDMG <- as.numeric(data2$PROPDMG)
+cleaneconomics <- mutate(data2, PropertyDamage = ifelse(PROPDMGEXP %in% c('-', '?', '+', '0'), PROPDMG * 1, ifelse(PROPDMGEXP %in% c('1', '2', '3', '4', '5', '6', '7', '8'), PROPDMG * (10 ** as.numeric(PROPDMGEXP)), ifelse(PROPDMGEXP %in% c('k', 'K'), PROPDMG * 1000, ifelse(PROPDMGEXP %in% c('m', 'M'), PROPDMG * 1000000, ifelse(PROPDMGEXP %in% c('h', 'H'), PROPDMG * 100, ifelse(PROPDMGEXP == 'B', PROPDMG * 1000000000, NA)))))), CropDamage = ifelse(CROPDMGEXP %in% c('-', '?', '+', '0'), CROPDMG * 1, ifelse(CROPDMGEXP %in% c('1', '2', '3', '4', '5', '6', '7', '8'), CROPDMG * (10 ** as.numeric(CROPDMGEXP)), ifelse(CROPDMGEXP %in% c('k', 'K'), CROPDMG * 1000, ifelse(CROPDMGEXP %in% c('m', 'M'), CROPDMG * 1000000, ifelse(CROPDMGEXP %in% c('h', 'H'), CROPDMG * 100, ifelse(CROPDMGEXP == 'B', CROPDMG * 1000000000, NA)))))))
+EconomicByEventGrouped <- group_by(cleaneconomics, EVTYPE)
+EconomicByEventSummarized <- summarize(EconomicByEventGrouped, EconomicDamage = sum(PropertyDamage, CropDamage))
+EconomicByEventOrdered <- arrange(EconomicByEventSummarized, desc(EconomicDamage))
+EconomicByEventSelect <- EconomicByEventOrdered[1:10, ]
+```
+
+## Results
+
+1) Across the United States, which types of events (as indicated in the EVTYPE variable) are most harmful with respect to population health?
+
+```{r}
+library(ggplot2)
+g <- ggplot(HarmByEventSelect, aes(reorder(EVTYPE, -HarmfulScore), HarmfulScore)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90)) + xlab("Event Type") + ylab("Harmful Score") + ggtitle("Events with the Most Deaths and Injuries Combined")
+print(g)
+```
+
+Tornados are the event type with the highest "Harmful Score". Harmful Score is measured by adding deaths and injuries.
+
+
+2) Across the United States, which types of events have the greatest economic consequences?
+
+```{r}
+g <- ggplot(EconomicByEventSelect, aes(reorder(EVTYPE, -EconomicDamage), EconomicDamage)) + geom_bar(stat = "identity") + theme(axis.text.x = element_text(angle = 90)) + xlab("Event Type") + ylab("Economic Damage") + ggtitle("Events with the Most Crop and Property Combined")
+print(g)
+```
+
+The category of "Tornadoes, tstm wind, hail" had the highest "Economic Damage" with economic damage measured as the addition of crop damage and property damage.

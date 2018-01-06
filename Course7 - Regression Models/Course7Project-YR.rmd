@@ -1,0 +1,86 @@
+---
+title: "Course7Project-YR"
+author: "Yonatan Rafael"
+output:
+  html_document: default
+  pdf_document: default
+---
+==============================================================
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###Executive Summary
+
+This report gagues whether automatic or maual transmission is better for MPG, along with quantifying the MPG difference between automatic and manual transmissions. The report uses the mtcars data set in R. below you will see an exploratory analysis, a t.test to test significance of the difference, and an attempt to model the data.
+
+
+### Exploratory Data Analysis
+
+Take a look at how the data is set up. Rename the "am" data for presentation purposes.
+```{r}
+data(mtcars)
+head(mtcars)
+mtcars$am2[mtcars$am == 0] <- "Auto"
+mtcars$am2[mtcars$am == 1] <- "Manual"
+```
+
+Run a boxplot comparing automatic transmission (x = 0) versus manual transmission (x = 1). The plot shows that the manual transmission looks to be faster than automatic transmission. Saved in Appexi
+
+### Testing our Hypothesis
+Based on the chart above, we set up a t-test.
+
+- Null hypothesis: Manual MPG equals Automatic MPG
+- Alternate hypothesis: Manual MPG does not equal Automatic MPG
+        
+```{r}
+t.test(mtcars$mpg ~ mtcars$am2, conf.level = .95)
+```      
+
+The results state that with 95% confidence, we reject the null hypothesis that the manual MPG and automatic MPG are the same. And based on our exploratory analysis it is clear that manual transmission MPG > automatic transmission MPG. This does however assume that transmission type is the only variable in the analysis.
+
+### Modeling 
+The first model includes all the variables. We'll look at the coefficients to determine which we'd like to include for future models. The results show that wt, am, and qsec are most relevant, based on having the lowest p-values.
+```{r}
+model <- lm(mpg ~ ., data = mtcars)
+summary(model)
+```     
+
+
+Our next model is focused on the above three variables (wt, am, qsec). This model shows that all three variables are signficant with 95% confdience interval. Additionally the R^2 value of .85 means that 85% of variance is explained in this model. The second model determines that switching from automatic to manual transmission increases MPG by 2.93 when holding qsec and wt constant.
+
+
+```{r}
+model2 <- lm(mpg ~ factor(am2) + wt + qsec, data = mtcars)
+summary(model2)
+```   
+
+### Conclusion
+
+- Manual transmission is better for MPG.
+- We need to factor in wt and qsec when evaluating effect on MPG.
+- When wt and qsec are held constant, the difference in MPG between Manual and Automatic transmission is 2.93.
+
+### APPENDIX.
+
+Boxplot to gauge difference between manual and automatic transmission as it pertains to MPG.
+```{r}
+boxplot(mtcars$mpg ~ factor(mtcars$am2), xlab = "Transmission", ylab =  "Miles per Gallon")
+title(main = "MPG by Transmission")
+```
+
+ANOVA test to gauge the significance of the variables in our final model.
+```{r}
+anova(model2)
+```   
+
+Residual Check and Normality Check.
+```{r}
+par(mfrow=c(2,2))
+plot(model2)
+```   
+
+
+
+

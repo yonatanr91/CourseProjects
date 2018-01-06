@@ -1,0 +1,22 @@
+---
+title: "Course9Week3Project-YR"
+author: "Yonatan Rafael"
+date: "December 12, 2017"
+output: ioslides_presentation
+---
+
+## Plotly Chart
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r cars, message = FALSE, warning = FALSE, echo = FALSE}
+library(plotly)
+library(vcd)
+data("Baseball")
+plot_ly(Baseball, x=~homeruns, y=~walks, type = "scatter", mode = "markers", color = ~factor(league86))
+```
+
+

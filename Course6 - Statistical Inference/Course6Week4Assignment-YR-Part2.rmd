@@ -1,0 +1,78 @@
+---
+title: "Course6Week4Assignment-YR-Part1"
+author: "Yonatan Rafael"
+output:
+  html_document: default
+  pdf_document: default
+---
+==============================================================
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+###Overview
+
+Part 2 of this report is a deep dive of ToothGrowth data.
+
+
+### Exploratory data analyses and Summary
+
+Load the ToothGrowth data set. Check out the top lines, dimensions to cover basic exploratory analysis.
+```{r}
+library(datasets)
+data("ToothGrowth")
+head(ToothGrowth)
+dim(ToothGrowth)
+str(ToothGrowth)
+```
+
+Provide a summary of the data.
+```{r}
+summary(ToothGrowth)
+```
+
+Visualize data by supplement and dose.
+```{r}
+library(ggplot2)
+g <- ggplot(ToothGrowth, aes(supp, len, fill = supp)) + geom_boxplot() + facet_grid(.~dose) + labs(x = "Supplement", y = "Tooth Growth", title = "Tooth Growth by Supplement and Growth")
+print(g)
+```
+
+The table above starts to show that the effect is strong on OJ than VC. It also shows that there is that there is no difference in supplement when the dosage is 2. We'll test the 
+
+### Testing
+
+Test #1 will check to see if the OJ supplement is more impactful in growing teeth than the VC supplement.
+- Null hypothesis: OJ = VC.
+- Alternative hypothesis: OJ > VC
+
+```{r}
+OJtable <- ToothGrowth[ToothGrowth$supp == "OJ", 1]
+VCtable <- ToothGrowth[ToothGrowth$supp == "VC", 1]
+t.test(OJtable, VCtable, alternative = "greater", paired = FALSE, var.equal = FALSE, conf.level = .95)
+```
+
+The p-value of .03032 is less than .05, so we are 95% confident that the effect of the OJ supplement is greater than the effect of the VC supplement.
+
+
+Test #2 will see if there is a difference in effect for OJ versus VC, when the dosage is 2.
+Null hypothesis: OJ when dosaage is 2 = VC when dosage is 2
+Alternative hypothesis: OJ when dosage is 2 /= VC when dosage is 2
+
+```{r}
+OJtable2 <- ToothGrowth[ToothGrowth$supp == "OJ" & ToothGrowth$dose == "2", 1]
+VCtable2 <- ToothGrowth[ToothGrowth$supp == "VC" & ToothGrowth$dose == "2", 1]
+t.test(OJtable2, VCtable2, alternative = "two.sided", paired = FALSE, var.equal = FALSE, conf.level = .95)
+```
+
+With a p-value = .9639, we fail to reject the possibility that the effect of OJ and VC are the same when dosage is 2.
+
+
+### Assumption and Conclusions
+
+Assumptions:
+1. Populations are independent and random populations were used.
+2. The sample population is normally distributed.
+
+Conclusion: The effect of OJ is greater than the effect of VC, excpect for when the dosage is 2.
